@@ -41,8 +41,9 @@ jobs:
           echo "OFT_JAR=$OFT_JAR" >> $GITHUB_ENV
           
           # Create a simple shell script wrapper
-          echo "#!/bin/sh
-          java -jar $OFT_JAR \"\$@\"" > /tmp/oft
+          echo "#!/bin/sh" > /tmp/oft
+          echo 'if [ -z "$OFT_JAR" ]; then echo "Error: OFT_JAR environment variable not set"; exit 1; fi' >> /tmp/oft
+          echo 'java -jar "$OFT_JAR" "$@"' >> /tmp/oft
           sudo mv /tmp/oft /usr/local/bin/oft
           sudo chmod +x /usr/local/bin/oft
 
