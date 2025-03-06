@@ -38,12 +38,19 @@ jobs:
           
           # Find the path to the JAR file
           OFT_JAR=$(find $(pwd) -name "openfasttrace-cli-*-jar-with-dependencies.jar" | head -n 1)
-          echo "OFT_JAR=$OFT_JAR" >> $GITHUB_ENV
           
-          # Create a simple shell script wrapper
+          # Verify JAR file exists
+          if [ ! -f "$OFT_JAR" ]; then
+            echo "Error: Could not find OpenFastTrace JAR file"
+            find $(pwd) -name "*.jar" | grep cli
+            exit 1
+          fi
+          
+          echo "Found JAR: $OFT_JAR"
+          
+          # Create a simple shell script wrapper with the hardcoded path
           echo "#!/bin/sh" > /tmp/oft
-          echo 'if [ -z "$OFT_JAR" ]; then echo "Error: OFT_JAR environment variable not set"; exit 1; fi' >> /tmp/oft
-          echo 'java -jar "$OFT_JAR" "$@"' >> /tmp/oft
+          echo "java -jar $OFT_JAR \"\$@\"" > /tmp/oft
           sudo mv /tmp/oft /usr/local/bin/oft
           sudo chmod +x /usr/local/bin/oft
 
