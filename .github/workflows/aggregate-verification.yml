@@ -36,10 +36,14 @@ jobs:
           # Build with Maven (skipping tests for speed)
           mvn clean install -DskipTests
           
-          # Make the OFT command available
-          sudo ln -s $(pwd)/openfasttrace-cli/target/openfasttrace-cli-*-jar-with-dependencies.jar /usr/local/bin/openfasttrace.jar
-          echo '#!/bin/sh
-          java -jar /usr/local/bin/openfasttrace.jar "$@"' | sudo tee /usr/local/bin/oft
+          # Find the path to the JAR file
+          OFT_JAR=$(find $(pwd) -name "openfasttrace-cli-*-jar-with-dependencies.jar" | head -n 1)
+          echo "OFT_JAR=$OFT_JAR" >> $GITHUB_ENV
+          
+          # Create a simple shell script wrapper
+          echo "#!/bin/sh
+          java -jar $OFT_JAR \"\$@\"" > /tmp/oft
+          sudo mv /tmp/oft /usr/local/bin/oft
           sudo chmod +x /usr/local/bin/oft
 
       - name: Download iOS Verification Artifact
@@ -57,6 +61,11 @@ jobs:
           
           # Copy system requirements to specs dir
           cp -r . all-specs/system
+          
+          # Debug: check that the oft script works
+          which oft
+          ls -la /usr/local/bin/oft
+          cat /usr/local/bin/oft
           
           # Extract all specifications (assuming verification files have embedded specs)
           oft import -i artifacts/ -i all-specs/ -o combined-trace.xml
