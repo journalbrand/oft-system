@@ -1,0 +1,54 @@
+name: Aggregate Verification
+
+on:
+  workflow_dispatch:
+
+jobs:
+  aggregate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup GH CLI
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh auth login --with-token <<< "$GH_TOKEN"
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Install OpenFastTrace
+        run: |
+          python -m pip install --upgrade pip
+          pip install openfasttrace
+
+      - name: Download iOS Verification Artifact
+        run: |
+          gh run download -R your-org/oft-ios -n ios-verification -D artifacts/
+
+      - name: Download Android Verification Artifact
+        run: |
+          gh run download -R your-org/oft-android -n android-verification -D artifacts/
+
+      - name: Generate Combined Verification Matrix
+        run: |
+          # Create a directory for all spec files
+          mkdir -p all-specs
+          
+          # Copy system requirements to specs dir
+          cp -r . all-specs/system
+          
+          # Extract all specifications (assuming verification files have embedded specs)
+          oft import -i artifacts/ -i all-specs/ -o combined-trace.xml
+          
+          # Generate comprehensive report
+          oft report -i combined-trace.xml -o verification-matrix.md -f markdown
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: system-verification-matrix
+          path: verification-matrix.md 
