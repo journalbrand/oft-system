@@ -22,15 +22,22 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Install Maven
+        uses: stCarolas/setup-maven@v4.5
+        with:
+          maven-version: '3.9.6'
+
       - name: Install OpenFastTrace
         run: |
-          # Download the OpenFastTrace JAR
-          mkdir -p /tmp/oft
-          cd /tmp/oft
-          wget https://github.com/itsallcode/openfasttrace/releases/download/3.3.1/openfasttrace-3.3.1.jar
+          # Clone the OpenFastTrace repository
+          git clone https://github.com/itsallcode/openfasttrace.git
+          cd openfasttrace
+          
+          # Build with Maven (skipping tests for speed)
+          mvn clean install -DskipTests
           
           # Make the OFT command available
-          sudo ln -s $(pwd)/openfasttrace-3.3.1.jar /usr/local/bin/openfasttrace.jar
+          sudo ln -s $(pwd)/openfasttrace-cli/target/openfasttrace-cli-*-jar-with-dependencies.jar /usr/local/bin/openfasttrace.jar
           echo '#!/bin/sh
           java -jar /usr/local/bin/openfasttrace.jar "$@"' | sudo tee /usr/local/bin/oft
           sudo chmod +x /usr/local/bin/oft
